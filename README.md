@@ -208,11 +208,7 @@ Add your own Google API credentials:
 
 ---
 
-## 🧑‍💻 Author
 
-**Vaishali Choudhary**
-
----
 
 ## ⭐ Show your support
 
