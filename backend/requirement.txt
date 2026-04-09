@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+sqlalchemy
+psycopg2-binary
+passlib[bcrypt]
+python-multipart
+google-api-python-client
+google-auth
+google-auth-oauthlib
