@@ -6,90 +6,77 @@ body {
 
 /* HEADER */
 .header {
-  background: linear-gradient(90deg, #4facfe, #00f2fe);
-  padding: 20px;
+  background: linear-gradient(90deg, #005bea, #00c6fb);
+  padding: 15px 30px;
   color: white;
-  font-size: 22px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 20px;
   font-weight: bold;
+}
+
+.logo img {
+  width: 40px;
 }
 
 /* CONTAINER */
 .container {
-  max-width: 900px;
-  margin: 20px auto;
-  padding: 20px;
+  max-width: 1000px;
+  margin: 30px auto;
 }
 
 /* CARD */
-.card {
+.card.premium {
   background: white;
-  padding: 20px;
-  border-radius: 12px;
-  margin-bottom: 20px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-  transition: 0.2s;
+  padding: 30px;
+  border-radius: 16px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.1);
 }
 
-.card:hover {
-  transform: translateY(-2px);
+/* GRID */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
 }
 
 /* INPUT */
 input, select {
-  width: 100%;
-  padding: 10px;
-  margin-top: 10px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  font-size: 14px;
 }
 
 input:focus {
+  border-color: #005bea;
   outline: none;
-  border: 1px solid #4facfe;
-  box-shadow: 0 0 5px rgba(79,172,254,0.5);
+  box-shadow: 0 0 5px rgba(0,91,234,0.3);
 }
 
 /* BUTTON */
-button {
-  margin-top: 10px;
-  padding: 10px;
+.premium-btn {
+  margin-top: 20px;
+  width: 100%;
+  padding: 14px;
   border: none;
-  border-radius: 8px;
-  background: #4facfe;
+  border-radius: 12px;
+  background: linear-gradient(90deg, #005bea, #00c6fb);
   color: white;
-  cursor: pointer;
-  width: 100%;
   font-weight: bold;
-}
-
-button:hover {
-  background: #3b8df5;
-}
-
-button:active {
-  transform: scale(0.98);
-}
-
-/* DROPDOWN */
-.dropdown-list {
-  position: absolute;
-  width: 100%;
-  background: white;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  margin-top: 5px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-  max-height: 200px;
-  overflow-y: auto;
-  z-index: 10;
-}
-
-.dropdown-item {
-  padding: 10px;
+  font-size: 16px;
   cursor: pointer;
-  border-bottom: 1px solid #eee;
 }
 
-.dropdown-item:hover {
-  background: #f0f6ff;
+.premium-btn:hover {
+  transform: scale(1.02);
+}
+
+/* UPLOAD */
+.upload-box {
+  margin-top: 15px;
 }

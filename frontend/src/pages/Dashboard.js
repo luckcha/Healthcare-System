@@ -1,164 +1,123 @@
 import { useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
 
 export default function Dashboard() {
+
   const [form, setForm] = useState({
     name: "",
     mobile: "",
     age: "",
     location: "",
     photoshoot_by: "",
-    clinic: ""
+    clinic: "",
+    concern: "",
+    date: "",
+    subfolder_name: "",   // 🔥 NEW
+    files: []
   });
 
-  const [results, setResults] = useState([]);
-  const navigate = useNavigate();
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
 
-  // 🔍 LIVE SEARCH
-  const handleSearch = async (value) => {
-    setForm({ ...form, name: value });
+  const handleFile = (e) => {
+    setForm({ ...form, files: e.target.files });
+  };
 
-    if (!value) {
-      setResults([]);
+  const createFull = async () => {
+
+    if (!form.name || !form.mobile || !form.date || !form.concern) {
+      alert("Please fill required fields ❌");
       return;
     }
 
-    try {
-      const res = await axios.get(
-        `http://127.0.0.1:8000/search?name=${value}`
-      );
-      setResults(res.data);
-    } catch (err) {
-      console.log(err);
-    }
-  };
-
-  // 👤 CREATE PATIENT
-  const createPatient = async () => {
     const data = new FormData();
 
     Object.keys(form).forEach((key) => {
-      data.append(key, form[key]);
+      if (key === "files") {
+        for (let i = 0; i < form.files.length; i++) {
+          data.append("files", form.files[i]);
+        }
+      } else {
+        data.append(key, form[key]);
+      }
     });
 
     try {
-      const res = await axios.post(
-        "http://127.0.0.1:8000/create-patient",
-        data
-      );
+      await axios.post("http://127.0.0.1:8000/create-full", data);
+      alert("Saved Successfully 🚀");
 
-      navigate(`/patient/${res.data.patient_id}`);
+      setForm({
+        name: "",
+        mobile: "",
+        age: "",
+        location: "",
+        photoshoot_by: "",
+        clinic: "",
+        concern: "",
+        date: "",
+        subfolder_name: "",  // 🔥 RESET
+        files: []
+      });
+
     } catch (err) {
       console.log(err);
+      alert("Error ❌");
     }
   };
 
   return (
     <>
-      <div className="header">Healthcare System</div>
+      {/* HEADER */}
+      <div className="header">
+        <div className="logo">
+          <img src="/logo.png" alt="Satya Logo"/>
+          <span>Satya Skin & Hair</span>
+        </div>
+      </div>
 
       <div className="container">
 
-        {/* 🔍 SEARCH SECTION */}
-        <div className="card">
-          <h2>Search Patient</h2>
+        <div className="card premium">
 
-          <input
-            placeholder="Search Patient..."
-            value={form.name}
-            onChange={(e) => handleSearch(e.target.value)}
-          />
+          <h2>Patient Entry</h2>
 
-          {/* 🔥 SUGGESTION DROPDOWN */}
-          {results.length > 0 && (
-            <div
-              style={{
-                background: "#fff",
-                border: "1px solid #ccc",
-                borderRadius: "8px",
-                marginTop: "5px"
-              }}
-            >
-              {results.map((r) => (
-                <div
-                  key={r.patient_id}
-                  style={{
-                    padding: "10px",
-                    cursor: "pointer",
-                    borderBottom: "1px solid #eee"
-                  }}
-                  onClick={() => {
-                    navigate(`/patient/${r.patient_id}`);
-                    setResults([]);
-                  }}
-                >
-                  {r.name} ({r.mobile})
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+          <div className="grid">
 
-        {/* ➕ CREATE PATIENT */}
-        <div className="card">
-          <h2>Create New Patient</h2>
+            <input name="name" placeholder="Patient Name" value={form.name} onChange={handleChange}/>
+            <input name="mobile" placeholder="Mobile Number" value={form.mobile} onChange={handleChange}/>
+            <input name="age" placeholder="Age" value={form.age} onChange={handleChange}/>
+            <input name="location" placeholder="Location" value={form.location} onChange={handleChange}/>
 
-          <input
-            placeholder="Name"
-            onChange={(e) =>
-              setForm({ ...form, name: e.target.value })
-            }
-          />
+            <input name="photoshoot_by" placeholder="Photoshoot By" value={form.photoshoot_by} onChange={handleChange}/>
 
-          <input
-            placeholder="Mobile"
-            onChange={(e) =>
-              setForm({ ...form, mobile: e.target.value })
-            }
-          />
+            <select name="clinic" value={form.clinic} onChange={handleChange}>
+              <option value="">Select Clinic</option>
+              <option value="Gurugram">Gurugram</option>
+              <option value="Pitampura">Pitampura</option>
+            </select>
 
-          <input
-            placeholder="Age"
-            onChange={(e) =>
-              setForm({ ...form, age: e.target.value })
-            }
-          />
+            <input name="concern" placeholder="Concern" value={form.concern} onChange={handleChange}/>
+            <input type="date" name="date" value={form.date} onChange={handleChange}/>
 
-          <input
-            placeholder="Location"
-            onChange={(e) =>
-              setForm({ ...form, location: e.target.value })
-            }
-          />
+            {/* 🔥 NEW FIELD */}
+            <input
+              name="subfolder_name"
+              placeholder="Folder Name (PRE / AFTER / BEFORE)"
+              value={form.subfolder_name}
+              onChange={handleChange}
+            />
 
-          <input
-            placeholder="Photoshoot Done By"
-            onChange={(e) =>
-              setForm({ ...form, photoshoot_by: e.target.value })
-            }
-          />
+          </div>
 
-          {/* 🔽 DROPDOWN */}
-          <select
-            onChange={(e) =>
-              setForm({ ...form, clinic: e.target.value })
-            }
-            style={{
-              width: "100%",
-              padding: "10px",
-              marginTop: "10px",
-              borderRadius: "8px"
-            }}
-          >
-            <option value="">Select Clinic</option>
-            <option value="Gurugram">Gurugram</option>
-            <option value="Pitampura">Pitampura</option>
-          </select>
+          <div className="upload-box">
+            <input type="file" multiple onChange={handleFile}/>
+          </div>
 
-          <button onClick={createPatient}>
-            Create Patient
+          <button className="premium-btn" onClick={createFull}>
+            Save Patient & Visit
           </button>
+
         </div>
 
       </div>

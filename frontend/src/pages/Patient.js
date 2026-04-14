@@ -1,78 +1,133 @@
 import { useParams } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import axios from "axios";
 
 export default function Patient() {
   const { id } = useParams();
 
-  const [data, setData] = useState(null);
   const [visitId, setVisitId] = useState("");
-  const [folder, setFolder] = useState("");
   const [files, setFiles] = useState([]);
   const [concern, setConcern] = useState("");
   const [date, setDate] = useState("");
+  const [folder, setFolder] = useState("");
 
-  useEffect(() => {
-    load();
-  }, []);
-
-  const load = async () => {
-    const res = await axios.get(`http://127.0.0.1:8000/patient/${id}`);
-    setData(res.data);
-  };
-
+  // 📅 CREATE VISIT
   const createVisit = async () => {
+
+    // 🔥 VALIDATION ADD
+    if (!concern || !date) {
+      alert("Please fill concern and date ❌");
+      return;
+    }
+
     const data = new FormData();
+
+    const name = localStorage.getItem("name");
+    const mobile = localStorage.getItem("mobile");
+
+    data.append("patient_id", id);
+    data.append("name", name || "unknown");
+    data.append("mobile", mobile || "0000000000");
     data.append("concern", concern);
     data.append("date", date);
 
-    const res = await axios.post(`http://127.0.0.1:8000/create-visit/${id}`, data);
-    setVisitId(res.data.visit_id);
-    alert("Visit created");
-    load();
+    try {
+      const res = await axios.post(
+        "http://127.0.0.1:8000/create-visit",
+        data
+      );
+
+      setVisitId(res.data.visit_id);
+      alert("Visit Created ✅");
+
+      // 🔥 RESET INPUTS
+      setConcern("");
+      setDate("");
+
+    } catch (err) {
+      console.log(err);
+      alert("Error creating visit");
+    }
   };
 
+  // 📤 UPLOAD FILES
   const upload = async () => {
+    const folder_id = localStorage.getItem("folder_id");
+
+    if (!folder_id) {
+      alert("❌ Folder ID missing (create patient first)");
+      return;
+    }
+
+    if (!folder) {
+      alert("Enter folder name (before / after)");
+      return;
+    }
+
     const data = new FormData();
-    data.append("folder_name", folder);
+
+    data.append("folder_id", folder_id);
+    data.append("subfolder_name", folder);
 
     for (let i = 0; i < files.length; i++) {
       data.append("files", files[i]);
     }
 
-    await axios.post(`http://127.0.0.1:8000/upload/${id}/${visitId}`, data);
-    alert("Uploaded");
+    try {
+      await axios.post("http://127.0.0.1:8000/upload", data);
+      alert("Uploaded Successfully 🚀");
+    } catch (err) {
+      console.log(err);
+      alert("Upload failed");
+    }
   };
-
-  if (!data) return <h2>Loading...</h2>;
 
   return (
     <>
-      <div className="header">{data.name}</div>
+      <div className="header">Patient ID: {id}</div>
 
       <div className="container">
 
+        {/* CREATE VISIT */}
         <div className="card">
           <h2>Create Visit</h2>
-          <input placeholder="Concern" onChange={e => setConcern(e.target.value)} />
-          <input type="date" onChange={e => setDate(e.target.value)} />
-          <button onClick={createVisit}>Create Visit</button>
+
+          <input
+            placeholder="Concern"
+            value={concern}   // 🔥 IMPORTANT
+            onChange={(e) => setConcern(e.target.value)}
+          />
+
+          <input
+            type="date"
+            value={date}     // 🔥 IMPORTANT
+            onChange={(e) => setDate(e.target.value)}
+          />
+
+          <button onClick={createVisit}>
+            Create Visit
+          </button>
         </div>
 
+        {/* UPLOAD */}
         <div className="card">
-          <h2>Visit History</h2>
-          {data.visits.map(v => (
-            <div key={v.visit_id}>
-              {v.date} - {v.concern}
-            </div>
-          ))}
-        </div>
+          <h2>Upload Photos / Videos</h2>
 
-        <div className="card">
-          <h2>Upload Files</h2>
-          <input placeholder="Folder Name (Pre / After)" onChange={e => setFolder(e.target.value)} />
-          <input type="file" multiple onChange={e => setFiles(e.target.files)} />
-          <button onClick={upload}>Upload</button>
+          <input
+            placeholder="Folder Name (before / after)"
+            value={folder}
+            onChange={(e) => setFolder(e.target.value)}
+          />
+
+          <input
+            type="file"
+            multiple
+            onChange={(e) => setFiles([...e.target.files])}
+          />
+
+          <button onClick={upload}>
+            Upload
+          </button>
         </div>
 
       </div>
