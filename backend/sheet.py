@@ -9,16 +9,14 @@ from google.oauth2.service_account import Credentials
 
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 
-creds_dict = json.loads(os.environ["GOOGLE_CREDS"])
-
-creds = Credentials.from_service_account_info(
-    creds_dict,
+creds = Credentials.from_service_account_file(
+    "/etc/secrets/credentials.json",
     scopes=SCOPES
 )
 
 client = gspread.authorize(creds)
 
-SHEET_ID = "PASTE_YOUR_SHEET_ID"
+SHEET_ID = "1nEIcAevIRa5h6Q_1zjeS4bQeGIxcMj6ZxNCTIt8WMY0"
 
 sheet = client.open_by_key(SHEET_ID).sheet1
 
