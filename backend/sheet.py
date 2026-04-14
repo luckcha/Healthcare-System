@@ -1,26 +1,73 @@
+import os
+import json
 import gspread
 from google.oauth2.service_account import Credentials
 
+# ==============================
+# 🔐 GOOGLE AUTH (ENV BASED)
+# ==============================
+
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 
-creds = Credentials.from_service_account_file(
-    "credentials.json", scopes=SCOPES
+creds_dict = json.loads(os.environ["GOOGLE_CREDS"])
+
+creds = Credentials.from_service_account_info(
+    creds_dict,
+    scopes=SCOPES
 )
 
 client = gspread.authorize(creds)
 
-SHEET_ID = "1nEIcAevIRa5h6Q_1zjeS4bQeGIxcMj6ZxNCTIt8WMY0"
+SHEET_ID = "PASTE_YOUR_SHEET_ID"
 
 sheet = client.open_by_key(SHEET_ID).sheet1
 
 
-# 👤 ADD PATIENT (ONLY ONCE)
-def add_patient(data):
-    records = sheet.get_all_records()
+# ==============================
+# 🔍 SEARCH PATIENT
+# ==============================
 
-    for r in records:
-        if str(r["mobile"]) == str(data["mobile"]):
-            return  # already exists
+def search_patient(name):
+    data = sheet.get_all_records()
+
+    result = []
+
+    for row in data:
+        if name.lower() in row["name"].lower():
+            result.append({
+                "patient_id": row["patient_id"],
+                "name": row["name"],
+                "mobile": row["mobile"],
+                "folder_link": row["folder_link"]
+            })
+
+    return result
+
+
+# ==============================
+# 🔍 FIND EXISTING PATIENT FOLDER
+# ==============================
+
+def find_patient_folder(mobile):
+    data = sheet.get_all_records()
+
+    for row in data:
+        if str(row["mobile"]) == str(mobile):
+            return row["folder_link"]
+
+    return None
+
+
+# ==============================
+# 👤 ADD PATIENT (NO DUPLICATE)
+# ==============================
+
+def add_patient(data):
+    existing = find_patient_folder(data["mobile"])
+
+    # ❌ already exists → skip
+    if existing:
+        return False
 
     sheet.append_row([
         data["patient_id"],
@@ -31,49 +78,24 @@ def add_patient(data):
         data["photoshoot_by"],
         data["clinic"],
         data["folder_link"],
-        "", "", ""
+        "", "", ""   # date, concern, visit_id empty
     ])
 
+    return True
 
-# 📅 UPDATE VISIT (NO DUPLICATE)
+
+# ==============================
+# 📅 ADD VISIT
+# ==============================
+
 def add_visit(data):
-    records = sheet.get_all_records()
-
-    for i, row in enumerate(records, start=2):
-        if str(row["mobile"]) == str(data["mobile"]):
-
-            sheet.update(f"I{i}", [[data["date"]]])
-            sheet.update(f"J{i}", [[data["concern"]]])
-            sheet.update(f"K{i}", [[data["visit_id"]]])
-            sheet.update(f"H{i}", [[data.get("folder_link", "")]])
-
-            return
-
-
-# 🔍 SEARCH
-def search_patient(name):
-    records = sheet.get_all_records()
-    results = []
-
-    for r in records:
-        if name.lower() in r["name"].lower():
-            results.append({
-                "patient_id": r["patient_id"],
-                "name": r["name"],
-                "mobile": r["mobile"]
-            })
-
-    return results
-
-
-# 🔍 FIND FOLDER
-def find_patient_folder(mobile):
-    records = sheet.get_all_records()
-
-    for r in records:
-        if str(r["mobile"]) == str(mobile):
-            link = r.get("folder_link")
-            if link:
-                return link.split("/")[-1]
-
-    return None
+    sheet.append_row([
+        data["patient_id"],
+        data["name"],
+        data["mobile"],
+        "", "", "", "",   # age, location, etc empty
+        data.get("folder_link", ""),
+        data["date"],
+        data["concern"],
+        data["visit_id"]
+    ])
