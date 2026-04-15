@@ -37,20 +37,21 @@ def create_full(
     subfolder_name: str = Form(...),
     files: List[UploadFile] = File(...)
 ):
+    patient_id = str(uuid4())
     visit_id = str(uuid4())
 
-    # 🔍 CHECK EXISTING
-    existing_folder_link = find_patient_folder(mobile)
+    # 🔍 CHECK EXISTING PATIENT
+    existing_folder = find_patient_folder(mobile)
 
-    if existing_folder_link:
-        patient_folder_id = extract_folder_id(existing_folder_link)
-        patient_link = existing_folder_link
+    if existing_folder:
+        patient_folder_id = existing_folder
+        patient_link = get_folder_link(patient_folder_id)
     else:
         patient_folder_id = create_folder(f"{name}_{mobile[-4:]}")
         patient_link = get_folder_link(patient_folder_id)
 
         add_patient({
-            "patient_id": str(uuid4()),
+            "patient_id": patient_id,
             "name": name,
             "mobile": mobile,
             "age": age,
@@ -62,13 +63,11 @@ def create_full(
 
     # 📅 VISIT FOLDER
     visit_folder_id = create_subfolder(f"Visit_{date}", patient_folder_id)
+    visit_link = get_folder_link(visit_folder_id)
 
     # 📁 CUSTOM SUBFOLDER
-    custom_folder_id = create_subfolder(subfolder_name, visit_folder_id)
-
-    # 🔗 LINKS
-    visit_link = get_folder_link(visit_folder_id)
-    subfolder_link = get_folder_link(custom_folder_id)
+    subfolder_id = create_subfolder(subfolder_name, visit_folder_id)
+    subfolder_link = get_folder_link(subfolder_id)
 
     # 📤 UPLOAD
     os.makedirs("temp", exist_ok=True)
@@ -79,20 +78,19 @@ def create_full(
         with open(path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
-        upload_file(path, custom_folder_id)
+        upload_file(path, subfolder_id)
         os.remove(path)
 
-    # 📝 ADD VISIT ENTRY
+    # 📝 SAVE VISIT (WITH LINKS)
     add_visit({
-        "patient_id": str(uuid4()),
+        "patient_id": patient_id,
         "name": name,
         "mobile": mobile,
-        "patient_link": patient_link,
-        "visit_link": visit_link,
-        "subfolder_link": subfolder_link,
         "date": date,
         "concern": concern,
-        "visit_id": visit_id
+        "visit_id": visit_id,
+        "visit_link": visit_link,
+        "subfolder_link": subfolder_link
     })
 
     return {"message": "Success 🚀"}

@@ -1,18 +1,43 @@
-from google.oauth2.service_account import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
-import os
+import os, pickle
 
 SCOPES = ['https://www.googleapis.com/auth/drive']
 
 
-# 🔐 SERVICE ACCOUNT AUTH (PRODUCTION)
 def get_drive_service():
-    creds = Credentials.from_service_account_file(
-        "/etc/secrets/credentials.json",   # 🔥 Render secret file
-        scopes=SCOPES
-    )
+    creds = None
+
+    if os.path.exists("token.pkl"):
+        with open("token.pkl", "rb") as token:
+            creds = pickle.load(token)
+
+    if not creds:
+        flow = InstalledAppFlow.from_client_secrets_file(
+            "client_secret.json", SCOPES
+        )
+        creds = flow.run_local_server(port=0)
+
+        with open("token.pkl", "wb") as token:
+            pickle.dump(creds, token)
+
     return build("drive", "v3", credentials=creds)
+
+
+# 🔥 MAKE PUBLIC FUNCTION
+def make_public(file_id):
+    service = get_drive_service()
+
+    permission = {
+        'type': 'anyone',
+        'role': 'reader'
+    }
+
+    service.permissions().create(
+        fileId=file_id,
+        body=permission
+    ).execute()
 
 
 # 📁 CREATE MAIN FOLDER
@@ -25,11 +50,14 @@ def create_folder(name):
     }
 
     folder = service.files().create(
-        body=file_metadata,
-        fields='id'
+        body=file_metadata, fields='id'
     ).execute()
 
-    return folder.get('id')
+    folder_id = folder.get('id')
+
+    make_public(folder_id)  # 🔥 IMPORTANT
+
+    return folder_id
 
 
 # 📁 CREATE SUBFOLDER
@@ -43,11 +71,14 @@ def create_subfolder(name, parent_id):
     }
 
     folder = service.files().create(
-        body=file_metadata,
-        fields='id'
+        body=file_metadata, fields='id'
     ).execute()
 
-    return folder.get('id')
+    folder_id = folder.get('id')
+
+    make_public(folder_id)  # 🔥 IMPORTANT
+
+    return folder_id
 
 
 # 📤 UPLOAD FILE
@@ -70,11 +101,6 @@ def upload_file(file_path, folder_id):
     return file.get('webViewLink')
 
 
-# 🔗 GET FOLDER LINK
+# 🔗 GET LINK
 def get_folder_link(folder_id):
     return f"https://drive.google.com/drive/folders/{folder_id}"
-
-
-# 🔧 EXTRACT ID FROM LINK
-def extract_folder_id(link):
-    return link.split("/")[-1]
