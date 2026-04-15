@@ -1,12 +1,12 @@
 import { useState } from "react";
 import axios from "axios";
 
-// 🔥 LIVE BACKEND
 const API = "https://healthcare-system-1x18.onrender.com";
 
 export default function Dashboard() {
 
-  const [loading, setLoading] = useState(false);
+  const [search, setSearch] = useState("");
+  const [results, setResults] = useState([]);
 
   const [form, setForm] = useState({
     name: "",
@@ -29,20 +29,20 @@ export default function Dashboard() {
     setForm({ ...form, files: e.target.files });
   };
 
+  const searchPatient = async (value) => {
+    setSearch(value);
+
+    if (!value) return setResults([]);
+
+    try {
+      const res = await axios.get(`${API}/search-patient?query=${value}`);
+      setResults(res.data);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
   const createFull = async () => {
-
-    if (!form.name || !form.mobile || !form.date || !form.concern) {
-      alert("Please fill required fields ❌");
-      return;
-    }
-
-    if (form.files.length === 0) {
-      alert("Please upload at least one file ❌");
-      return;
-    }
-
-    setLoading(true);
-
     const data = new FormData();
 
     Object.keys(form).forEach((key) => {
@@ -57,91 +57,73 @@ export default function Dashboard() {
 
     try {
       await axios.post(`${API}/create-full`, data);
-
-      alert("Saved Successfully 🚀");
-
-      setForm({
-        name: "",
-        mobile: "",
-        age: "",
-        location: "",
-        photoshoot_by: "",
-        clinic: "",
-        concern: "",
-        date: "",
-        subfolder_name: "",
-        files: []
-      });
-
+      alert("Saved 🚀");
     } catch (err) {
       console.log(err);
-
-      if (err.response) {
-        alert(err.response.data.detail || "Server Error ❌");
-      } else {
-        alert("Network Error ❌");
-      }
-    } finally {
-      setLoading(false);
+      alert("Error ❌");
     }
   };
 
   return (
-    <>
-      <div className="header">
-        <div className="logo">
-          <img src="/logo.png" alt="Satya Logo" />
-          <span>Satya Skin & Hair</span>
-        </div>
+    <div className="main">
+
+      {/* 🔍 SEARCH */}
+      <div className="card">
+        <h3>🔍 Search Patient</h3>
+
+        <input
+          className="input"
+          placeholder="Search name / mobile"
+          value={search}
+          onChange={(e) => searchPatient(e.target.value)}
+        />
+
+        {results.map((p, i) => (
+          <div key={i} className="result">
+            <div>
+              <b>{p.name}</b>
+              <p>{p.mobile}</p>
+            </div>
+
+            <a href={p.patient_link} target="_blank">
+              Open →
+            </a>
+          </div>
+        ))}
       </div>
 
-      <div className="container">
+      {/* 🧾 FORM */}
+      <div className="card">
+        <h3>Patient Entry</h3>
 
-        <div className="card premium">
-          <h2>Patient Entry</h2>
+        <div className="grid">
 
-          <div className="grid">
+          <input className="input" name="name" placeholder="Name" onChange={handleChange}/>
+          <input className="input" name="mobile" placeholder="Mobile" onChange={handleChange}/>
+          <input className="input" name="age" placeholder="Age" onChange={handleChange}/>
+          <input className="input" name="location" placeholder="Location" onChange={handleChange}/>
+          <input className="input" name="photoshoot_by" placeholder="Photoshoot By" onChange={handleChange}/>
 
-            <input name="name" placeholder="Patient Name" value={form.name} onChange={handleChange} />
-            <input name="mobile" placeholder="Mobile Number" value={form.mobile} onChange={handleChange} />
-            <input name="age" placeholder="Age" value={form.age} onChange={handleChange} />
-            <input name="location" placeholder="Location" value={form.location} onChange={handleChange} />
+          <select className="input" name="clinic" onChange={handleChange}>
+            <option value="">Clinic</option>
+            <option>Gurugram</option>
+            <option>Pitampura</option>
+          </select>
 
-            <input name="photoshoot_by" placeholder="Photoshoot By" value={form.photoshoot_by} onChange={handleChange} />
+          <input className="input" name="concern" placeholder="Concern" onChange={handleChange}/>
+          <input className="input" type="date" name="date" onChange={handleChange}/>
 
-            <select name="clinic" value={form.clinic} onChange={handleChange}>
-              <option value="">Select Clinic</option>
-              <option value="Gurugram">Gurugram</option>
-              <option value="Pitampura">Pitampura</option>
-            </select>
-
-            <input name="concern" placeholder="Concern" value={form.concern} onChange={handleChange} />
-            <input type="date" name="date" value={form.date} onChange={handleChange} />
-
-            <input
-              name="subfolder_name"
-              placeholder="Folder Name (PRE / AFTER / BEFORE)"
-              value={form.subfolder_name}
-              onChange={handleChange}
-            />
-
-          </div>
-
-          <div className="upload-box">
-            <input type="file" multiple onChange={handleFile} />
-          </div>
-
-          <button
-            className="premium-btn"
-            onClick={createFull}
-            disabled={loading}
-          >
-            {loading ? "Saving..." : "Save Patient & Visit"}
-          </button>
+          <input className="input" name="subfolder_name" placeholder="Folder (PRE / AFTER)" onChange={handleChange}/>
 
         </div>
 
+        <input className="file" type="file" multiple onChange={handleFile}/>
+
+        <button className="btn" onClick={createFull}>
+          Save Patient
+        </button>
       </div>
-    </>
+
+    </div>
   );
 }

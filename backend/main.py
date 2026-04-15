@@ -4,17 +4,16 @@ from typing import List
 from uuid import uuid4
 import shutil, os
 
-from drive import create_folder, create_subfolder, upload_file, get_folder_link, extract_folder_id
-from sheet import add_patient, add_visit, find_patient_folder
+from drive import create_folder, create_subfolder, upload_file, get_folder_link
+from sheet import add_patient, add_visit, find_patient_folder, get_all_patients
 
 app = FastAPI()
 
+# ✅ FINAL CORS (working)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://healthcare-system-liart.vercel.app",  # 🔥 तेरा frontend
-    ],
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -24,6 +23,20 @@ def home():
     return {"message": "Backend Running 🚀"}
 
 
+# 🔍 SEARCH API
+@app.get("/search-patient")
+def search_patient(query: str):
+    data = get_all_patients()
+    result = []
+
+    for row in data:
+        if query.lower() in str(row["name"]).lower() or query in str(row["mobile"]):
+            result.append(row)
+
+    return result
+
+
+# 🚀 CREATE FULL
 @app.post("/create-full")
 def create_full(
     name: str = Form(...),
@@ -40,7 +53,6 @@ def create_full(
     patient_id = str(uuid4())
     visit_id = str(uuid4())
 
-    # 🔍 CHECK EXISTING PATIENT
     existing_folder = find_patient_folder(mobile)
 
     if existing_folder:
@@ -61,15 +73,12 @@ def create_full(
             "patient_link": patient_link
         })
 
-    # 📅 VISIT FOLDER
     visit_folder_id = create_subfolder(f"Visit_{date}", patient_folder_id)
     visit_link = get_folder_link(visit_folder_id)
 
-    # 📁 CUSTOM SUBFOLDER
     subfolder_id = create_subfolder(subfolder_name, visit_folder_id)
     subfolder_link = get_folder_link(subfolder_id)
 
-    # 📤 UPLOAD
     os.makedirs("temp", exist_ok=True)
 
     for file in files:
@@ -81,7 +90,6 @@ def create_full(
         upload_file(path, subfolder_id)
         os.remove(path)
 
-    # 📝 SAVE VISIT (WITH LINKS)
     add_visit({
         "patient_id": patient_id,
         "name": name,

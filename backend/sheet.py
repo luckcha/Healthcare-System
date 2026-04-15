@@ -60,3 +60,5 @@ def add_visit(data):
         data["concern"],        # L
         data["visit_id"]        # M
     ])
+def get_all_patients():
+    return sheet.get_all_records()    
