@@ -16,10 +16,10 @@ from sheet import add_patient, add_visit, find_patient_folder, search_patient
 
 app = FastAPI()
 
-# ✅ CORS FIX (stable)
+# 🔥 CORS FIX (fully open for now)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # production me specific domain kar dena
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -57,8 +57,6 @@ def create_full(
     # 🔍 CHECK EXISTING
     existing_folder = find_patient_folder(mobile)
 
-    print("existing_folder:", existing_folder, type(existing_folder))  # debug
-
     if existing_folder:
         patient_folder_id = extract_folder_id(existing_folder)
         patient_link = existing_folder
@@ -77,7 +75,7 @@ def create_full(
             "folder_link": patient_link
         })
 
-    # 📁 VISIT FOLDER
+    # 📁 VISIT
     visit_folder_id = create_subfolder(f"Visit_{date}", patient_folder_id)
     visit_link = get_folder_link(visit_folder_id)
 
@@ -85,7 +83,7 @@ def create_full(
     subfolder_id = create_subfolder(subfolder_name, visit_folder_id)
     subfolder_link = get_folder_link(subfolder_id)
 
-    # 📤 UPLOAD FILES
+    # 📤 FILE UPLOAD
     os.makedirs("temp", exist_ok=True)
 
     for file in files:

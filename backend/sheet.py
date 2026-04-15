@@ -1,18 +1,19 @@
-import os
 import json
 import gspread
 from google.oauth2.service_account import Credentials
 
-# 🔐 GOOGLE AUTH
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 
-creds_json = json.loads(os.environ["GOOGLE_CREDS"])
+# 🔥 Render Secret File
+with open("/etc/secrets/credentials.json") as f:
+    creds_json = json.load(f)
 
 creds = Credentials.from_service_account_info(creds_json, scopes=SCOPES)
 
 client = gspread.authorize(creds)
+SHEET_ID = "1nEIcAevIRa5h6Q_1zjeS4bQeGIxcMj6ZxNCTIt8WMY0"
 
-sheet = client.open("Healthcare System").sheet1
+sheet = client.open_by_key(SHEET_ID).sheet1
 
 
 # 🧑 ADD PATIENT
@@ -25,7 +26,7 @@ def add_patient(data):
         data["location"],
         data["photoshoot_by"],
         data["clinic"],
-        data["folder_link"],  # H column
+        data["folder_link"],  # H
         "", "", "", "", "", ""
     ])
 
@@ -36,7 +37,7 @@ def add_visit(data):
         data["patient_id"],
         data["name"],
         data["mobile"],
-        "", "", "", "",  # skip patient cols
+        "", "", "", "",  # skip patient columns
         data["patient_link"],   # H
         data["visit_link"],     # I
         data["subfolder_link"], # J
@@ -52,12 +53,12 @@ def find_patient_folder(mobile):
 
     for row in records:
         if str(row.get("mobile")) == str(mobile):
-            return row.get("patient_link")  # ✅ ONLY STRING
+            return row.get("patient_link")  # only string
 
     return None
 
 
-# 🔎 SEARCH PATIENT (NEW)
+# 🔎 SEARCH PATIENT
 def search_patient(query):
     records = sheet.get_all_records()
     results = []
