@@ -2,13 +2,12 @@ import { useParams } from "react-router-dom";
 import { useState } from "react";
 import axios from "axios";
 
-// 🔥 YOUR LIVE BACKEND URL
+// 🔥 LIVE BACKEND URL
 const API = "https://healthcare-system-1x18.onrender.com";
 
 export default function Patient() {
   const { id } = useParams();
 
-  const [visitId, setVisitId] = useState("");
   const [files, setFiles] = useState([]);
   const [concern, setConcern] = useState("");
   const [date, setDate] = useState("");
@@ -34,14 +33,11 @@ export default function Patient() {
     data.append("date", date);
 
     try {
-      const res = await axios.post(
-        `${API}/create-visit`,
-        data
-      );
+      await axios.post(`${API}/create-visit`, data);
 
-      setVisitId(res.data.visit_id);
       alert("Visit Created ✅");
 
+      // reset
       setConcern("");
       setDate("");
 
@@ -56,7 +52,7 @@ export default function Patient() {
     const folder_id = localStorage.getItem("folder_id");
 
     if (!folder_id) {
-      alert("❌ Folder ID missing (create patient first)");
+      alert("❌ Folder ID missing");
       return;
     }
 
