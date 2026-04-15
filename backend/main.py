@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, File, Form
+from fastapi import FastAPI, UploadFile, File, Form, Query
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List
 from uuid import uuid4
@@ -19,18 +19,26 @@ app = FastAPI()
 # ✅ CORS FIX
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 🔥 temporarily open
+    allow_origins=["*"],  # production me domain dal dena
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 
+# ✅ ROOT
 @app.get("/")
 def home():
     return {"message": "Backend Running 🚀"}
 
 
+# 🔍 SEARCH API (🔥 NEW ADD)
+@app.get("/search-patient")
+def search_patient(query: str = Query(...)):
+    return find_patient_folder(query, search=True)
+
+
+# 🧾 CREATE FULL FLOW
 @app.post("/create-full")
 def create_full(
     name: str = Form(...),
@@ -47,11 +55,10 @@ def create_full(
     patient_id = str(uuid4())
     visit_id = str(uuid4())
 
-    # 🔍 CHECK EXISTING
+    # 🔍 CHECK EXISTING PATIENT
     existing_folder = find_patient_folder(mobile)
 
     if existing_folder:
-        # 🔥 FIX: extract ID from link
         patient_folder_id = extract_folder_id(existing_folder)
         patient_link = existing_folder
     else:
@@ -77,7 +84,7 @@ def create_full(
     subfolder_id = create_subfolder(subfolder_name, visit_folder_id)
     subfolder_link = get_folder_link(subfolder_id)
 
-    # 📤 UPLOAD
+    # 📤 FILE UPLOAD
     os.makedirs("temp", exist_ok=True)
 
     for file in files:
@@ -89,7 +96,7 @@ def create_full(
         upload_file(path, subfolder_id)
         os.remove(path)
 
-    # 📝 VISIT ENTRY
+    # 📝 SAVE VISIT
     add_visit({
         "patient_id": patient_id,
         "name": name,
@@ -97,7 +104,7 @@ def create_full(
         "date": date,
         "concern": concern,
         "visit_id": visit_id,
-        "patient_link": patient_link,   # 🔥 FIX
+        "patient_link": patient_link,
         "visit_link": visit_link,
         "subfolder_link": subfolder_link
     })
