@@ -25,22 +25,13 @@ def get_drive_service():
     return build("drive", "v3", credentials=creds)
 
 
-# 🔥 MAKE PUBLIC FUNCTION
-def make_public(file_id):
-    service = get_drive_service()
-
-    permission = {
-        'type': 'anyone',
-        'role': 'reader'
-    }
-
-    service.permissions().create(
-        fileId=file_id,
-        body=permission
-    ).execute()
+# 🔥 IMPORTANT FIX
+def extract_folder_id(link):
+    if "folders/" in link:
+        return link.split("folders/")[1].split("?")[0]
+    return link
 
 
-# 📁 CREATE MAIN FOLDER
 def create_folder(name):
     service = get_drive_service()
 
@@ -53,14 +44,9 @@ def create_folder(name):
         body=file_metadata, fields='id'
     ).execute()
 
-    folder_id = folder.get('id')
-
-    make_public(folder_id)  # 🔥 IMPORTANT
-
-    return folder_id
+    return folder.get('id')
 
 
-# 📁 CREATE SUBFOLDER
 def create_subfolder(name, parent_id):
     service = get_drive_service()
 
@@ -74,14 +60,9 @@ def create_subfolder(name, parent_id):
         body=file_metadata, fields='id'
     ).execute()
 
-    folder_id = folder.get('id')
-
-    make_public(folder_id)  # 🔥 IMPORTANT
-
-    return folder_id
+    return folder.get('id')
 
 
-# 📤 UPLOAD FILE
 def upload_file(file_path, folder_id):
     service = get_drive_service()
 
@@ -101,9 +82,5 @@ def upload_file(file_path, folder_id):
     return file.get('webViewLink')
 
 
-# 🔗 GET LINK
 def get_folder_link(folder_id):
     return f"https://drive.google.com/drive/folders/{folder_id}"
-
-def extract_folder_id(link):
-    return link.split("/")[-1]

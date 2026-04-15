@@ -4,39 +4,33 @@ from typing import List
 from uuid import uuid4
 import shutil, os
 
-from drive import create_folder, create_subfolder, upload_file, get_folder_link
-from sheet import add_patient, add_visit, find_patient_folder, get_all_patients
+from drive import (
+    create_folder,
+    create_subfolder,
+    upload_file,
+    get_folder_link,
+    extract_folder_id
+)
+
+from sheet import add_patient, add_visit, find_patient_folder
 
 app = FastAPI()
 
-# ✅ FINAL CORS (working)
+# ✅ CORS FIX
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
+    allow_origins=["*"],  # 🔥 temporarily open
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 @app.get("/")
 def home():
     return {"message": "Backend Running 🚀"}
 
 
-# 🔍 SEARCH API
-@app.get("/search-patient")
-def search_patient(query: str):
-    data = get_all_patients()
-    result = []
-
-    for row in data:
-        if query.lower() in str(row["name"]).lower() or query in str(row["mobile"]):
-            result.append(row)
-
-    return result
-
-
-# 🚀 CREATE FULL
 @app.post("/create-full")
 def create_full(
     name: str = Form(...),
@@ -53,11 +47,13 @@ def create_full(
     patient_id = str(uuid4())
     visit_id = str(uuid4())
 
+    # 🔍 CHECK EXISTING
     existing_folder = find_patient_folder(mobile)
 
     if existing_folder:
-        patient_folder_id = existing_folder
-        patient_link = get_folder_link(patient_folder_id)
+        # 🔥 FIX: extract ID from link
+        patient_folder_id = extract_folder_id(existing_folder)
+        patient_link = existing_folder
     else:
         patient_folder_id = create_folder(f"{name}_{mobile[-4:]}")
         patient_link = get_folder_link(patient_folder_id)
@@ -70,15 +66,18 @@ def create_full(
             "location": location,
             "photoshoot_by": photoshoot_by,
             "clinic": clinic,
-            "patient_link": patient_link
+            "folder_link": patient_link
         })
 
+    # 📁 VISIT FOLDER
     visit_folder_id = create_subfolder(f"Visit_{date}", patient_folder_id)
     visit_link = get_folder_link(visit_folder_id)
 
+    # 📂 SUBFOLDER
     subfolder_id = create_subfolder(subfolder_name, visit_folder_id)
     subfolder_link = get_folder_link(subfolder_id)
 
+    # 📤 UPLOAD
     os.makedirs("temp", exist_ok=True)
 
     for file in files:
@@ -90,6 +89,7 @@ def create_full(
         upload_file(path, subfolder_id)
         os.remove(path)
 
+    # 📝 VISIT ENTRY
     add_visit({
         "patient_id": patient_id,
         "name": name,
@@ -97,6 +97,7 @@ def create_full(
         "date": date,
         "concern": concern,
         "visit_id": visit_id,
+        "patient_link": patient_link,   # 🔥 FIX
         "visit_link": visit_link,
         "subfolder_link": subfolder_link
     })
