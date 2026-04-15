@@ -104,3 +104,6 @@ def upload_file(file_path, folder_id):
 # 🔗 GET LINK
 def get_folder_link(folder_id):
     return f"https://drive.google.com/drive/folders/{folder_id}"
+
+def extract_folder_id(link):
+    return link.split("/")[-1]
