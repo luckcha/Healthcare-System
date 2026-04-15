@@ -1,6 +1,9 @@
 import { useState } from "react";
 import axios from "axios";
 
+// 🔥 CHANGE HERE (YOUR LIVE BACKEND URL)
+const API = "https://healthcare-system-1x18.onrender.com";
+
 export default function Dashboard() {
 
   const [form, setForm] = useState({
@@ -12,7 +15,7 @@ export default function Dashboard() {
     clinic: "",
     concern: "",
     date: "",
-    subfolder_name: "",   // 🔥 NEW
+    subfolder_name: "",
     files: []
   });
 
@@ -44,7 +47,8 @@ export default function Dashboard() {
     });
 
     try {
-      await axios.post("http://127.0.0.1:8000/create-full", data);
+      await axios.post(`${API}/create-full`, data);
+
       alert("Saved Successfully 🚀");
 
       setForm({
@@ -56,7 +60,7 @@ export default function Dashboard() {
         clinic: "",
         concern: "",
         date: "",
-        subfolder_name: "",  // 🔥 RESET
+        subfolder_name: "",
         files: []
       });
 
@@ -68,7 +72,6 @@ export default function Dashboard() {
 
   return (
     <>
-      {/* HEADER */}
       <div className="header">
         <div className="logo">
           <img src="/logo.png" alt="Satya Logo"/>
@@ -79,7 +82,6 @@ export default function Dashboard() {
       <div className="container">
 
         <div className="card premium">
-
           <h2>Patient Entry</h2>
 
           <div className="grid">
@@ -100,7 +102,6 @@ export default function Dashboard() {
             <input name="concern" placeholder="Concern" value={form.concern} onChange={handleChange}/>
             <input type="date" name="date" value={form.date} onChange={handleChange}/>
 
-            {/* 🔥 NEW FIELD */}
             <input
               name="subfolder_name"
               placeholder="Folder Name (PRE / AFTER / BEFORE)"

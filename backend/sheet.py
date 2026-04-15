@@ -3,10 +3,6 @@ import json
 import gspread
 from google.oauth2.service_account import Credentials
 
-# ==============================
-# 🔐 GOOGLE AUTH (ENV BASED)
-# ==============================
-
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 
 creds = Credentials.from_service_account_file(
@@ -17,56 +13,26 @@ creds = Credentials.from_service_account_file(
 client = gspread.authorize(creds)
 
 SHEET_ID = "1nEIcAevIRa5h6Q_1zjeS4bQeGIxcMj6ZxNCTIt8WMY0"
-
 sheet = client.open_by_key(SHEET_ID).sheet1
 
 
-# ==============================
-# 🔍 SEARCH PATIENT
-# ==============================
-
+# 🔍 SEARCH
 def search_patient(name):
     data = sheet.get_all_records()
-
-    result = []
-
-    for row in data:
-        if name.lower() in row["name"].lower():
-            result.append({
-                "patient_id": row["patient_id"],
-                "name": row["name"],
-                "mobile": row["mobile"],
-                "folder_link": row["folder_link"]
-            })
-
-    return result
+    return [row for row in data if name.lower() in row["name"].lower()]
 
 
-# ==============================
-# 🔍 FIND EXISTING PATIENT FOLDER
-# ==============================
-
+# 🔍 FIND EXISTING PATIENT
 def find_patient_folder(mobile):
     data = sheet.get_all_records()
-
     for row in data:
         if str(row["mobile"]) == str(mobile):
-            return row["folder_link"]
-
+            return row["patient_link"]
     return None
 
 
-# ==============================
-# 👤 ADD PATIENT (NO DUPLICATE)
-# ==============================
-
+# 👤 ADD PATIENT (ONLY ONCE)
 def add_patient(data):
-    existing = find_patient_folder(data["mobile"])
-
-    # ❌ already exists → skip
-    if existing:
-        return False
-
     sheet.append_row([
         data["patient_id"],
         data["name"],
@@ -75,25 +41,22 @@ def add_patient(data):
         data["location"],
         data["photoshoot_by"],
         data["clinic"],
-        data["folder_link"],
-        "", "", ""   # date, concern, visit_id empty
+        data["patient_link"],   # column H
+        "", "", "", "", ""      # बाकी खाली
     ])
 
-    return True
 
-
-# ==============================
 # 📅 ADD VISIT
-# ==============================
-
 def add_visit(data):
     sheet.append_row([
         data["patient_id"],
         data["name"],
         data["mobile"],
-        "", "", "", "",   # age, location, etc empty
-        data.get("folder_link", ""),
-        data["date"],
-        data["concern"],
-        data["visit_id"]
+        "", "", "", "",   # skip patient info
+        data["patient_link"],   # H
+        data["visit_link"],     # I
+        data["subfolder_link"], # J
+        data["date"],           # K
+        data["concern"],        # L
+        data["visit_id"]        # M
     ])

@@ -1,31 +1,21 @@
-from google_auth_oauthlib.flow import InstalledAppFlow
+from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
-import os, pickle
+import os
 
 SCOPES = ['https://www.googleapis.com/auth/drive']
 
 
+# 🔐 SERVICE ACCOUNT AUTH (PRODUCTION)
 def get_drive_service():
-    creds = None
-
-    if os.path.exists("token.pkl"):
-        with open("token.pkl", "rb") as token:
-            creds = pickle.load(token)
-
-    if not creds:
-        flow = InstalledAppFlow.from_client_secrets_file(
-            "client_secret.json", SCOPES
-        )
-        creds = flow.run_local_server(port=0)
-
-        with open("token.pkl", "wb") as token:
-            pickle.dump(creds, token)
-
+    creds = Credentials.from_service_account_file(
+        "/etc/secrets/credentials.json",   # 🔥 Render secret file
+        scopes=SCOPES
+    )
     return build("drive", "v3", credentials=creds)
 
 
-# 👇 SAME FUNCTIONS
+# 📁 CREATE MAIN FOLDER
 def create_folder(name):
     service = get_drive_service()
 
@@ -35,12 +25,14 @@ def create_folder(name):
     }
 
     folder = service.files().create(
-        body=file_metadata, fields='id'
+        body=file_metadata,
+        fields='id'
     ).execute()
 
     return folder.get('id')
 
 
+# 📁 CREATE SUBFOLDER
 def create_subfolder(name, parent_id):
     service = get_drive_service()
 
@@ -51,12 +43,14 @@ def create_subfolder(name, parent_id):
     }
 
     folder = service.files().create(
-        body=file_metadata, fields='id'
+        body=file_metadata,
+        fields='id'
     ).execute()
 
     return folder.get('id')
 
 
+# 📤 UPLOAD FILE
 def upload_file(file_path, folder_id):
     service = get_drive_service()
 
@@ -76,5 +70,11 @@ def upload_file(file_path, folder_id):
     return file.get('webViewLink')
 
 
+# 🔗 GET FOLDER LINK
 def get_folder_link(folder_id):
     return f"https://drive.google.com/drive/folders/{folder_id}"
+
+
+# 🔧 EXTRACT ID FROM LINK
+def extract_folder_id(link):
+    return link.split("/")[-1]

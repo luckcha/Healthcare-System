@@ -2,6 +2,9 @@ import { useParams } from "react-router-dom";
 import { useState } from "react";
 import axios from "axios";
 
+// 🔥 YOUR LIVE BACKEND URL
+const API = "https://healthcare-system-1x18.onrender.com";
+
 export default function Patient() {
   const { id } = useParams();
 
@@ -14,7 +17,6 @@ export default function Patient() {
   // 📅 CREATE VISIT
   const createVisit = async () => {
 
-    // 🔥 VALIDATION ADD
     if (!concern || !date) {
       alert("Please fill concern and date ❌");
       return;
@@ -33,14 +35,13 @@ export default function Patient() {
 
     try {
       const res = await axios.post(
-        "http://127.0.0.1:8000/create-visit",
+        `${API}/create-visit`,
         data
       );
 
       setVisitId(res.data.visit_id);
       alert("Visit Created ✅");
 
-      // 🔥 RESET INPUTS
       setConcern("");
       setDate("");
 
@@ -74,7 +75,7 @@ export default function Patient() {
     }
 
     try {
-      await axios.post("http://127.0.0.1:8000/upload", data);
+      await axios.post(`${API}/upload`, data);
       alert("Uploaded Successfully 🚀");
     } catch (err) {
       console.log(err);
@@ -94,13 +95,13 @@ export default function Patient() {
 
           <input
             placeholder="Concern"
-            value={concern}   // 🔥 IMPORTANT
+            value={concern}
             onChange={(e) => setConcern(e.target.value)}
           />
 
           <input
             type="date"
-            value={date}     // 🔥 IMPORTANT
+            value={date}
             onChange={(e) => setDate(e.target.value)}
           />
 

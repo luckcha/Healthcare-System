@@ -4,7 +4,7 @@ from typing import List
 from uuid import uuid4
 import shutil, os
 
-from drive import create_folder, create_subfolder, upload_file, get_folder_link
+from drive import create_folder, create_subfolder, upload_file, get_folder_link, extract_folder_id
 from sheet import add_patient, add_visit, find_patient_folder
 
 app = FastAPI()
@@ -16,6 +16,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.get("/")
+def home():
+    return {"message": "Backend Running 🚀"}
+
 
 @app.post("/create-full")
 def create_full(
@@ -30,27 +35,27 @@ def create_full(
     subfolder_name: str = Form(...),
     files: List[UploadFile] = File(...)
 ):
-    patient_id = str(uuid4())
     visit_id = str(uuid4())
 
-    # 🔍 CHECK EXISTING PATIENT
-    existing_folder = find_patient_folder(mobile)
+    # 🔍 CHECK EXISTING
+    existing_folder_link = find_patient_folder(mobile)
 
-    if existing_folder:
-        patient_folder_id = existing_folder
+    if existing_folder_link:
+        patient_folder_id = extract_folder_id(existing_folder_link)
+        patient_link = existing_folder_link
     else:
         patient_folder_id = create_folder(f"{name}_{mobile[-4:]}")
         patient_link = get_folder_link(patient_folder_id)
 
         add_patient({
-            "patient_id": patient_id,
+            "patient_id": str(uuid4()),
             "name": name,
             "mobile": mobile,
             "age": age,
             "location": location,
             "photoshoot_by": photoshoot_by,
             "clinic": clinic,
-            "folder_link": patient_link
+            "patient_link": patient_link
         })
 
     # 📅 VISIT FOLDER
@@ -59,9 +64,11 @@ def create_full(
     # 📁 CUSTOM SUBFOLDER
     custom_folder_id = create_subfolder(subfolder_name, visit_folder_id)
 
+    # 🔗 LINKS
     visit_link = get_folder_link(visit_folder_id)
+    subfolder_link = get_folder_link(custom_folder_id)
 
-    # 📤 UPLOAD FILES
+    # 📤 UPLOAD
     os.makedirs("temp", exist_ok=True)
 
     for file in files:
@@ -73,15 +80,17 @@ def create_full(
         upload_file(path, custom_folder_id)
         os.remove(path)
 
-    # 📝 UPDATE VISIT (NO DUPLICATE)
+    # 📝 ADD VISIT ENTRY
     add_visit({
-        "patient_id": patient_id,
+        "patient_id": str(uuid4()),
         "name": name,
         "mobile": mobile,
+        "patient_link": patient_link,
+        "visit_link": visit_link,
+        "subfolder_link": subfolder_link,
         "date": date,
         "concern": concern,
-        "visit_id": visit_id,
-        "folder_link": visit_link
+        "visit_id": visit_id
     })
 
     return {"message": "Success 🚀"}
