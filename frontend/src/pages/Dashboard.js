@@ -1,10 +1,12 @@
 import { useState } from "react";
 import axios from "axios";
 
-// 🔥 CHANGE HERE (YOUR LIVE BACKEND URL)
+// 🔥 LIVE BACKEND
 const API = "https://healthcare-system-1x18.onrender.com";
 
 export default function Dashboard() {
+
+  const [loading, setLoading] = useState(false);
 
   const [form, setForm] = useState({
     name: "",
@@ -33,6 +35,13 @@ export default function Dashboard() {
       alert("Please fill required fields ❌");
       return;
     }
+
+    if (form.files.length === 0) {
+      alert("Please upload at least one file ❌");
+      return;
+    }
+
+    setLoading(true);
 
     const data = new FormData();
 
@@ -66,7 +75,14 @@ export default function Dashboard() {
 
     } catch (err) {
       console.log(err);
-      alert("Error ❌");
+
+      if (err.response) {
+        alert(err.response.data.detail || "Server Error ❌");
+      } else {
+        alert("Network Error ❌");
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -74,7 +90,7 @@ export default function Dashboard() {
     <>
       <div className="header">
         <div className="logo">
-          <img src="/logo.png" alt="Satya Logo"/>
+          <img src="/logo.png" alt="Satya Logo" />
           <span>Satya Skin & Hair</span>
         </div>
       </div>
@@ -86,12 +102,12 @@ export default function Dashboard() {
 
           <div className="grid">
 
-            <input name="name" placeholder="Patient Name" value={form.name} onChange={handleChange}/>
-            <input name="mobile" placeholder="Mobile Number" value={form.mobile} onChange={handleChange}/>
-            <input name="age" placeholder="Age" value={form.age} onChange={handleChange}/>
-            <input name="location" placeholder="Location" value={form.location} onChange={handleChange}/>
+            <input name="name" placeholder="Patient Name" value={form.name} onChange={handleChange} />
+            <input name="mobile" placeholder="Mobile Number" value={form.mobile} onChange={handleChange} />
+            <input name="age" placeholder="Age" value={form.age} onChange={handleChange} />
+            <input name="location" placeholder="Location" value={form.location} onChange={handleChange} />
 
-            <input name="photoshoot_by" placeholder="Photoshoot By" value={form.photoshoot_by} onChange={handleChange}/>
+            <input name="photoshoot_by" placeholder="Photoshoot By" value={form.photoshoot_by} onChange={handleChange} />
 
             <select name="clinic" value={form.clinic} onChange={handleChange}>
               <option value="">Select Clinic</option>
@@ -99,8 +115,8 @@ export default function Dashboard() {
               <option value="Pitampura">Pitampura</option>
             </select>
 
-            <input name="concern" placeholder="Concern" value={form.concern} onChange={handleChange}/>
-            <input type="date" name="date" value={form.date} onChange={handleChange}/>
+            <input name="concern" placeholder="Concern" value={form.concern} onChange={handleChange} />
+            <input type="date" name="date" value={form.date} onChange={handleChange} />
 
             <input
               name="subfolder_name"
@@ -112,11 +128,15 @@ export default function Dashboard() {
           </div>
 
           <div className="upload-box">
-            <input type="file" multiple onChange={handleFile}/>
+            <input type="file" multiple onChange={handleFile} />
           </div>
 
-          <button className="premium-btn" onClick={createFull}>
-            Save Patient & Visit
+          <button
+            className="premium-btn"
+            onClick={createFull}
+            disabled={loading}
+          >
+            {loading ? "Saving..." : "Save Patient & Visit"}
           </button>
 
         </div>
