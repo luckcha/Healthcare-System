@@ -3,29 +3,63 @@ import json
 import gspread
 from google.oauth2.service_account import Credentials
 
+# 🔐 GOOGLE AUTH
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 
-creds = Credentials.from_service_account_file(
-    "/etc/secrets/credentials.json",
-    scopes=SCOPES
-)
+creds_json = json.loads(os.environ["GOOGLE_CREDS"])
+
+creds = Credentials.from_service_account_info(creds_json, scopes=SCOPES)
 
 client = gspread.authorize(creds)
 
-SHEET_ID = "1nEIcAevIRa5h6Q_1zjeS4bQeGIxcMj6ZxNCTIt8WMY0"
-sheet = client.open_by_key(SHEET_ID).sheet1
+sheet = client.open("Healthcare System").sheet1
 
 
-# 🔍 SEARCH
-def search_patient(name):
-    data = sheet.get_all_records()
-    return [row for row in data if name.lower() in row["name"].lower()]
+# 🧑 ADD PATIENT
+def add_patient(data):
+    sheet.append_row([
+        data["patient_id"],
+        data["name"],
+        data["mobile"],
+        data["age"],
+        data["location"],
+        data["photoshoot_by"],
+        data["clinic"],
+        data["folder_link"],  # H column
+        "", "", "", "", "", ""
+    ])
 
 
-# 🔍 FIND EXISTING PATIENT
-def find_patient_folder(query):
+# 📅 ADD VISIT
+def add_visit(data):
+    sheet.append_row([
+        data["patient_id"],
+        data["name"],
+        data["mobile"],
+        "", "", "", "",  # skip patient cols
+        data["patient_link"],   # H
+        data["visit_link"],     # I
+        data["subfolder_link"], # J
+        data["date"],           # K
+        data["concern"],        # L
+        data["visit_id"]        # M
+    ])
+
+
+# 🔍 FIND PATIENT (🔥 FIXED)
+def find_patient_folder(mobile):
     records = sheet.get_all_records()
 
+    for row in records:
+        if str(row.get("mobile")) == str(mobile):
+            return row.get("patient_link")  # ✅ ONLY STRING
+
+    return None
+
+
+# 🔎 SEARCH PATIENT (NEW)
+def search_patient(query):
+    records = sheet.get_all_records()
     results = []
 
     for row in records:
@@ -41,38 +75,3 @@ def find_patient_folder(query):
             })
 
     return results
-
-# 👤 ADD PATIENT (ONLY ONCE)
-def add_patient(data):
-    sheet.append_row([
-        data["patient_id"],
-        data["name"],
-        data["mobile"],
-        data["age"],
-        data["location"],
-        data["photoshoot_by"],
-        data["clinic"],
-        data["patient_link"],   # column H
-        "", "", "", "", ""      # बाकी खाली
-    ])
-
-
-# 📅 ADD VISIT
-def add_visit(data):
-    sheet.append_row([
-        data["patient_id"],
-        data["name"],
-        data["mobile"],
-        data.get("age", ""),
-        data.get("location", ""),
-        data.get("photoshoot_by", ""),
-        data.get("clinic", ""),
-        data["patient_link"],
-        data["visit_link"],
-        data["subfolder_link"],
-        data["date"],
-        data["concern"],
-        data["visit_id"]
-    ])
-def get_all_patients():
-    return sheet.get_all_records()    
