@@ -63,13 +63,16 @@ def add_visit(data):
         data["patient_id"],
         data["name"],
         data["mobile"],
-        "", "", "", "",   # skip patient info
-        data["patient_link"],   # H
-        data["visit_link"],     # I
-        data["subfolder_link"], # J
-        data["date"],           # K
-        data["concern"],        # L
-        data["visit_id"]        # M
+        data.get("age", ""),
+        data.get("location", ""),
+        data.get("photoshoot_by", ""),
+        data.get("clinic", ""),
+        data["patient_link"],
+        data["visit_link"],
+        data["subfolder_link"],
+        data["date"],
+        data["concern"],
+        data["visit_id"]
     ])
 def get_all_patients():
     return sheet.get_all_records()    
