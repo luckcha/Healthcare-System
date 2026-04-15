@@ -34,9 +34,8 @@ def home():
 
 # 🔍 SEARCH API (🔥 NEW ADD)
 @app.get("/search-patient")
-def search_patient(query: str = Query(...)):
-    return find_patient_folder(query, search=True)
-
+def search_patient(query: str):
+    return find_patient_folder(query)
 
 # 🧾 CREATE FULL FLOW
 @app.post("/create-full")

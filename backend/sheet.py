@@ -23,13 +23,24 @@ def search_patient(name):
 
 
 # 🔍 FIND EXISTING PATIENT
-def find_patient_folder(mobile):
-    data = sheet.get_all_records()
-    for row in data:
-        if str(row["mobile"]) == str(mobile):
-            return row["patient_link"]
-    return None
+def find_patient_folder(query):
+    records = sheet.get_all_records()
 
+    results = []
+
+    for row in records:
+        name = str(row.get("name", "")).lower()
+        mobile = str(row.get("mobile", ""))
+
+        if query.lower() in name or query in mobile:
+            results.append({
+                "patient_id": row.get("patient_id"),
+                "name": row.get("name"),
+                "mobile": row.get("mobile"),
+                "patient_link": row.get("patient_link")
+            })
+
+    return results
 
 # 👤 ADD PATIENT (ONLY ONCE)
 def add_patient(data):
